@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/reflection"
 )
 
 var collection *mongo.Collection // will be used in many functions. (not only main func!)
@@ -25,6 +26,9 @@ type server struct {
 
 // PORT : gRPC server port
 const PORT int = 50051
+
+// DEBUG : debug mode without TLS
+const DEBUG bool = false
 
 // DBPORT : mongoDB port
 const DBPORT int = 27017
@@ -43,19 +47,24 @@ func main() {
 	defer lis.Close()
 
 	opts := []grpc.ServerOption{} // blank options
-	certFile := "ssl/server.crt"
-	keyFile := "ssl/server.pem"
-	creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
-	if sslErr != nil {
-		log.Fatalln("failed to load certificates: ", sslErr)
-		return
+	if !DEBUG {
+		certFile := "ssl/server.crt"
+		keyFile := "ssl/server.pem"
+		creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
+		if sslErr != nil {
+			log.Fatalln("failed to load certificates: ", sslErr)
+			return
+		}
+		opts = append(opts, grpc.Creds(creds))
 	}
-	opts = append(opts, grpc.Creds(creds))
 	s := grpc.NewServer(opts...)
 	defer fmt.Println("Server stopped.")
 	defer s.Stop()
 
 	protobuf.RegisterTipServiceServer(s, &server{})
+	if !DEBUG {
+		reflection.Register(s) // for Evans (https://github.com/ktr0731/evans)
+	}
 	fmt.Println("Ready for running server...")
 
 	// Connect to MongoDB: need to be started DB before running server
