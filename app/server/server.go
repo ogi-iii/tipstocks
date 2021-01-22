@@ -28,7 +28,7 @@ type server struct {
 const PORT int = 50051
 
 // DEBUG : debug mode without TLS
-const DEBUG bool = false
+const DEBUG bool = true
 
 // DBPORT : mongoDB port
 const DBPORT int = 27017
@@ -62,9 +62,7 @@ func main() {
 	defer s.Stop()
 
 	protobuf.RegisterTipServiceServer(s, &server{})
-	if !DEBUG {
-		reflection.Register(s) // for Evans (https://github.com/ktr0731/evans)
-	}
+	reflection.Register(s) // for Evans (https://github.com/ktr0731/evans)
 	fmt.Println("Ready for running server...")
 
 	// Connect to MongoDB: need to be started DB before running server
