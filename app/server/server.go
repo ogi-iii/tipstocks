@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"myTips/tipstocks/app/protobuf"
+	"myTips/tipstocks/app/setting"
 	"net"
 	"os"
 	"os/signal"
@@ -24,20 +25,11 @@ type server struct {
 	protobuf.UnimplementedTipServiceServer // must be contained!
 }
 
-// PORT : gRPC server port
-const PORT int = 50051
-
-// DEBUG : debug mode without TLS
-const DEBUG bool = true
-
-// DBPORT : mongoDB port
-const DBPORT int = 27017
-
 func main() {
 	// Getting the file name & line number if we crashed the go codes
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	address := fmt.Sprintf("0.0.0.0:%v", PORT)
+	address := fmt.Sprintf("0.0.0.0:%v", setting.Conf.ServerPort)
 	lis, lisErr := net.Listen("tcp", address)
 	if lisErr != nil {
 		log.Fatalln("failed to listen: ", lisErr)
@@ -47,7 +39,7 @@ func main() {
 	defer lis.Close()
 
 	opts := []grpc.ServerOption{} // blank options
-	if !DEBUG {
+	if !setting.Conf.ServerDebug {
 		certFile := "ssl/server.crt"
 		keyFile := "ssl/server.pem"
 		creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
@@ -66,7 +58,7 @@ func main() {
 	fmt.Println("Ready for running server...")
 
 	// Connect to MongoDB: need to be started DB before running server
-	dbURI := fmt.Sprintf("mongodb://localhost:%v", DBPORT)
+	dbURI := fmt.Sprintf("mongodb://localhost:%v", setting.Conf.DBPort)
 	client, dbErr := mongo.NewClient(options.Client().ApplyURI(dbURI))
 	if dbErr != nil {
 		log.Fatalln(dbErr)
@@ -87,12 +79,12 @@ func main() {
 	defer fmt.Println("\nDisconnected with MongoDB.")
 	defer client.Disconnect(ctx) // need to be stopped DB after stopping app
 
-	collection = client.Database("tipstocks").Collection("tips") // specify the collection from MongoDB
-	fmt.Printf("Connected with MongoDB! (Collection: %v, port: %v)\n", collection.Name(), DBPORT)
+	collection = client.Database(setting.Conf.DBName).Collection(setting.Conf.DBCollection)
+	fmt.Printf("Connected with MongoDB! (Collection: %v, port: %v)\n", collection.Name(), setting.Conf.DBPort)
 
 	// running server as goroutine
 	go func() {
-		fmt.Printf("Server started! (port: %v)\n", PORT)
+		fmt.Printf("Server started! (port: %v)\n", setting.Conf.ServerPort)
 		if err := s.Serve(lis); err != nil {
 			log.Fatalln("failed to serve: ", err)
 		}
