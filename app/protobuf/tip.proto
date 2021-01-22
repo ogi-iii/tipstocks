@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package tip;
+
+option go_package = "app/protobuf";
+
+message Tip {
+    string id = 1;
+    string title = 2;
+    string url = 3;
+}
+
+message CreateTipRequest {
+    Tip tip = 1;
+}
+
+message CreateTipResponse {
+    Tip tip = 1;
+}
+
+message DeleteTipRequest {
+    string tip_id = 1;
+}
+
+message DeleteTipResponse {
+    string tip_id = 1;
+}
+
+message AllTipsRequest {
+    // empty message: list all Tips
+}
+
+message AllTipsResponse {
+    Tip tip = 1;
+}
+
+service TipService {
+    rpc CreateTip (CreateTipRequest) returns (CreateTipResponse);
+    rpc DeleteTip (DeleteTipRequest) returns (DeleteTipResponse);
+    rpc AllTips (AllTipsRequest) returns (stream AllTipsResponse);
+}
