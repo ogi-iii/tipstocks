@@ -5,19 +5,62 @@ import (
 	"fmt"
 	"log"
 	"myTips/tipstocks/app/protobuf"
-	"myTips/tipstocks/app/setting"
+	"myTips/tipstocks/app/utils"
 	"net"
 	"os"
 	"os/signal"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/status"
 )
+
+func (*server) CreateTip(ctx context.Context, req *protobuf.CreateTipRequest) (*protobuf.CreateTipResponse, error) {
+	fmt.Println("CreateTip requested!")
+	tip := req.GetTip()
+	data := tipItem{
+		Title: tip.GetTitle(),
+		URL:   tip.GetUrl(),
+	}
+	res, err := collection.InsertOne(ctx, data)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal error: %v\n", err),
+		)
+	}
+	objID, ok := res.InsertedID.(primitive.ObjectID) // type assertion
+	if !ok {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("InsertedID cannot be converted to objID"),
+		)
+	}
+	data.ID = objID
+	return &protobuf.CreateTipResponse{Tip: convertDataToTip(&data)}, nil
+}
+
+func convertDataToTip(data *tipItem) *protobuf.Tip {
+	return &protobuf.Tip{
+		Id:    data.ID.Hex(), // ObjectID -> hex string
+		Title: data.Title,
+		Url:   data.URL,
+	}
+}
+
+// item struct for mongoDB: "bson" means "binary JSON", which is the data format of MongoDB
+type tipItem struct {
+	ID    primitive.ObjectID `bson:"_id,omitempty"` // can be omitted
+	Title string             `bson:"title"`
+	URL   string             `bson:"url"`
+}
 
 var collection *mongo.Collection // will be used in many functions. (not only main func!)
 
@@ -29,7 +72,7 @@ func main() {
 	// Getting the file name & line number if we crashed the go codes
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	address := fmt.Sprintf("0.0.0.0:%v", setting.Conf.ServerPort)
+	address := fmt.Sprintf("0.0.0.0:%v", utils.Conf.ServerPort)
 	lis, lisErr := net.Listen("tcp", address)
 	if lisErr != nil {
 		log.Fatalln("failed to listen: ", lisErr)
@@ -39,7 +82,7 @@ func main() {
 	defer lis.Close()
 
 	opts := []grpc.ServerOption{} // blank options
-	if !setting.Conf.ServerDebug {
+	if !utils.Conf.ServerDebug {
 		certFile := "ssl/server.crt"
 		keyFile := "ssl/server.pem"
 		creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
@@ -58,7 +101,7 @@ func main() {
 	fmt.Println("Ready for running server...")
 
 	// Connect to MongoDB: need to be started DB before running server
-	dbURI := fmt.Sprintf("mongodb://localhost:%v", setting.Conf.DBPort)
+	dbURI := fmt.Sprintf("mongodb://localhost:%v", utils.Conf.DBPort)
 	client, dbErr := mongo.NewClient(options.Client().ApplyURI(dbURI))
 	if dbErr != nil {
 		log.Fatalln(dbErr)
@@ -79,12 +122,12 @@ func main() {
 	defer fmt.Println("\nDisconnected with MongoDB.")
 	defer client.Disconnect(ctx) // need to be stopped DB after stopping app
 
-	collection = client.Database(setting.Conf.DBName).Collection(setting.Conf.DBCollection)
-	fmt.Printf("Connected with MongoDB! (Collection: %v, port: %v)\n", collection.Name(), setting.Conf.DBPort)
+	collection = client.Database(utils.Conf.DBName).Collection(utils.Conf.DBCollection)
+	fmt.Printf("Connected with MongoDB! (Collection: %v, port: %v)\n", collection.Name(), utils.Conf.DBPort)
 
 	// running server as goroutine
 	go func() {
-		fmt.Printf("Server started! (port: %v)\n", setting.Conf.ServerPort)
+		fmt.Printf("Server started! (port: %v)\n", utils.Conf.ServerPort)
 		if err := s.Serve(lis); err != nil {
 			log.Fatalln("failed to serve: ", err)
 		}
