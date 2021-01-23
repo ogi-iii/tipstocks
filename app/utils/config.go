@@ -1,4 +1,4 @@
-package setting
+package utils
 
 import (
 	"log"
@@ -6,8 +6,8 @@ import (
 	"gopkg.in/ini.v1"
 )
 
-// Settings : settings from app/config.ini
-type Settings struct {
+// Configs : settings from app/config.ini
+type Configs struct {
 	ServerPort   int
 	ServerDebug  bool
 	DBPort       int
@@ -15,16 +15,16 @@ type Settings struct {
 	DBCollection string
 }
 
-// Conf : contains Settings
-var Conf Settings
+// Conf : contains Configs
+var Conf Configs
 
 func init() {
-	cfg, cfgErr := ini.Load("app/setting/config.ini")
+	cfg, cfgErr := ini.Load("app/utils/config.ini")
 	if cfgErr != nil {
 		log.Fatalln("Cannot load config.ini: ", cfgErr)
 		return
 	}
-	Conf = Settings{
+	Conf = Configs{
 		ServerPort:   cfg.Section("server").Key("port").MustInt(50051),
 		ServerDebug:  cfg.Section("server").Key("port").MustBool(true),
 		DBPort:       cfg.Section("db").Key("port").MustInt(27017),
