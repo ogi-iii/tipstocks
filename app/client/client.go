@@ -39,6 +39,7 @@ func main() {
 	defer cc.Close()
 
 	c := protobuf.NewTipServiceClient(cc)
+	fmt.Println(c)
 
 	// url := "https://www.google.com/"
 	// tip, err := createTip(c, url)
@@ -59,12 +60,25 @@ func main() {
 	// }
 	// fmt.Println(tips, len(tips))
 
-	title := "google"
-	foundTips, err := searchTips(c, title)
+	// title := "google"
+	// foundTips, err := searchTips(c, title)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// fmt.Println(foundTips, len(foundTips))
+
+	uri := "https://www.w3.org/"
+	s, err := goscraper.Scrape(uri, 5)
 	if err != nil {
-		log.Fatalln(err)
+		fmt.Println(err)
+		return
 	}
-	fmt.Println(foundTips, len(foundTips))
+	fmt.Printf("Icon : %s\n", s.Preview.Icon)
+	fmt.Printf("Name : %s\n", s.Preview.Name)
+	fmt.Printf("Title : %s\n", s.Preview.Title)
+	fmt.Printf("Description : %s\n", s.Preview.Description)
+	fmt.Printf("Image: %s\n", s.Preview.Images[0])
+	fmt.Printf("Url : %s\n", s.Preview.Link)
 
 }
 
