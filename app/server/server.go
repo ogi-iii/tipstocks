@@ -11,6 +11,7 @@ import (
 	"os/signal"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -23,7 +24,7 @@ import (
 )
 
 func (*server) CreateTip(ctx context.Context, req *protobuf.CreateTipRequest) (*protobuf.CreateTipResponse, error) {
-	fmt.Println("CreateTip requested!")
+	log.Println("CreateTip requested!")
 	tip := req.GetTip()
 	data := tipItem{
 		Title: tip.GetTitle(),
@@ -45,6 +46,36 @@ func (*server) CreateTip(ctx context.Context, req *protobuf.CreateTipRequest) (*
 	}
 	data.ID = objID
 	return &protobuf.CreateTipResponse{Tip: convertDataToTip(&data)}, nil
+}
+
+func (*server) DeleteTip(ctx context.Context, req *protobuf.DeleteTipRequest) (*protobuf.DeleteTipResponse, error) {
+	log.Println("DeleteTip requested!")
+	tipID := req.GetTipId()
+	objID, err := primitive.ObjectIDFromHex(tipID) // hex string -> ObjectID
+	if err != nil {
+		return nil, status.Errorf(
+			codes.InvalidArgument,
+			fmt.Sprintf("cannot parse id: %v\n", err),
+		)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	filter := bson.M{"_id": objID} // bson map of filtered id
+	res, err := collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("couldn't delete a tip in MongoDB: %v", err),
+		)
+	} else if res.DeletedCount == 0 {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("couldn't delete a tip in MongoDB: %v", err),
+		)
+	}
+	return &protobuf.DeleteTipResponse{
+		TipId: tipID,
+	}, nil
 }
 
 func convertDataToTip(data *tipItem) *protobuf.Tip {

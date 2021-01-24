@@ -9,7 +9,9 @@ import (
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 )
 
 func main() {
@@ -38,18 +40,23 @@ func main() {
 	fmt.Println(c)
 
 	url := "http://www.tohoho-web.com/ex/golang.html"
-	id, err := createTip(c, url)
+	tip, err := createTip(c, url)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println(id)
+	fmt.Println(tip)
+
+	err = deleteTip(c, tip.GetId())
+	if err != nil {
+		log.Fatalln(err)
+	}
 }
 
-func createTip(c protobuf.TipServiceClient, url string) (string, error) {
+func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
 	title, err := utils.GetURLTitle(url)
 	if err != nil {
 		log.Println("Cannot get title from url: ", err)
-		return "", err
+		return nil, err
 	}
 	tip := &protobuf.Tip{
 		Title: title,
@@ -63,8 +70,37 @@ func createTip(c protobuf.TipServiceClient, url string) (string, error) {
 	res, err := c.CreateTip(ctx, req)
 	if err != nil {
 		log.Println("Unexpected error: ", err)
-		return "", err
+		return nil, err
 	}
 	fmt.Println("New tip created!")
-	return res.GetTip().GetId(), nil
+	return res.GetTip(), nil
+}
+
+func deleteTip(c protobuf.TipServiceClient, id string) error {
+	req := &protobuf.DeleteTipRequest{
+		TipId: id,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	res, err := c.DeleteTip(ctx, req)
+	if err != nil {
+		statusErr, ok := status.FromError(err)
+		if ok {
+			if statusErr.Code() == codes.InvalidArgument {
+				log.Println("Invalid id received: ", id)
+				return err
+			} else if statusErr.Code() == codes.Internal {
+				log.Println("Deletion error in MongoDB")
+				return err
+			} else {
+				log.Println("Unexpected error: ", statusErr)
+				return err
+			}
+		} else {
+			log.Println("error while calling DeleteTip: ", err)
+			return err
+		}
+	}
+	fmt.Println("Delete completed!: ", res.GetTipId())
+	return nil
 }
