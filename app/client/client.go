@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"myTips/tipstocks/app/protobuf"
 	"myTips/tipstocks/app/utils"
@@ -39,17 +40,23 @@ func main() {
 	c := protobuf.NewTipServiceClient(cc)
 	fmt.Println(c)
 
-	url := "http://www.tohoho-web.com/ex/golang.html"
-	tip, err := createTip(c, url)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fmt.Println(tip)
+	// url := "http://www.tohoho-web.com/ex/golang.html"
+	// tip, err := createTip(c, url)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// fmt.Println(tip)
 
-	err = deleteTip(c, tip.GetId())
+	// err = deleteTip(c, tip.GetId())
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	tips, err := allTips(c)
 	if err != nil {
 		log.Fatalln(err)
 	}
+	fmt.Println(tips)
 }
 
 func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
@@ -103,4 +110,29 @@ func deleteTip(c protobuf.TipServiceClient, id string) error {
 	}
 	fmt.Println("Delete completed!: ", res.GetTipId())
 	return nil
+}
+
+func allTips(c protobuf.TipServiceClient) ([]*protobuf.Tip, error) {
+	req := &protobuf.AllTipsRequest{}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	stream, err := c.AllTips(ctx, req)
+	if err != nil {
+		log.Println("error while calling AllTips: ", err)
+		return nil, err
+	}
+	tips := make([]*protobuf.Tip, 0)
+	for {
+		res, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Println("Error happened: ", err)
+			return nil, err
+		}
+		tips = append(tips, res.GetTip())
+	}
+	fmt.Println("All completed!")
+	return tips, nil
 }

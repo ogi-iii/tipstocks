@@ -78,6 +78,40 @@ func (*server) DeleteTip(ctx context.Context, req *protobuf.DeleteTipRequest) (*
 	}, nil
 }
 
+func (*server) AllTips(req *protobuf.AllTipsRequest, stream protobuf.TipService_AllTipsServer) error {
+	log.Println("AllTips requested!")
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	cur, err := collection.Find(ctx, primitive.D{{}}) // find all tips
+	if err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("couldn't find tips from MongoDB: %v", err),
+		)
+	}
+	defer cur.Close(ctx)
+	for cur.Next(ctx) { // cursor iterator
+		data := &tipItem{}
+		err = cur.Decode(data) // decode cursor to data struct
+		if err != nil {
+			return status.Errorf(
+				codes.Internal,
+				fmt.Sprintf("couldn't convert to tip: %v", err),
+			)
+		}
+		stream.Send(&protobuf.AllTipsResponse{
+			Tip: convertDataToTip(data),
+		})
+	}
+	if err := cur.Err(); err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal error: %v", err),
+		)
+	}
+	return nil
+}
+
 func convertDataToTip(data *tipItem) *protobuf.Tip {
 	return &protobuf.Tip{
 		Id:    data.ID.Hex(), // ObjectID -> hex string
