@@ -106,6 +106,36 @@ func (*server) AllTips(req *protobuf.AllTipsRequest, stream protobuf.TipService_
 	return nil
 }
 
+func (*server) SearchTips(req *protobuf.SearchTipsRequest, stream protobuf.TipService_SearchTipsServer) error {
+	log.Println("SearchTips requested!")
+	title := req.GetTipTitle()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	// title filtering: regex with case-insensitive option as "i"
+	cur, err := findTips(ctx, primitive.D{{Key: "title", Value: primitive.Regex{Pattern: title, Options: "i"}}})
+	defer cur.Close(ctx)
+	for cur.Next(ctx) { // cursor iterator
+		data := &tipItem{}
+		err = cur.Decode(data) // decode cursor to data struct
+		if err != nil {
+			return status.Errorf(
+				codes.Internal,
+				fmt.Sprintf("couldn't convert to tip: %v", err),
+			)
+		}
+		stream.Send(&protobuf.SearchTipsResponse{
+			Tip: convertDataToTip(data),
+		})
+	}
+	if err := cur.Err(); err != nil {
+		return status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("Internal error: %v", err),
+		)
+	}
+	return nil
+}
+
 func findTips(ctx context.Context, filter interface{}) (*mongo.Cursor, error) {
 	cur, err := collection.Find(ctx, filter)
 	if err != nil {

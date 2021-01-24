@@ -39,23 +39,32 @@ func main() {
 
 	c := protobuf.NewTipServiceClient(cc)
 
-	// url := "http://www.tohoho-web.com/ex/golang.html"
+	// url := "https://www.google.com/"
 	// tip, err := createTip(c, url)
 	// if err != nil {
 	// 	log.Fatalln(err)
 	// }
 	// fmt.Println(tip)
 
-	// err = deleteTip(c, tip.GetId())
+	// id := ""
+	// err = deleteTip(c, id)
 	// if err != nil {
 	// 	log.Fatalln(err)
 	// }
 
-	tips, err := allTips(c)
+	// tips, err := allTips(c)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// fmt.Println(tips, len(tips))
+
+	title := "google"
+	foundTips, err := searchTips(c, title)
 	if err != nil {
 		log.Fatalln(err)
 	}
-	fmt.Println(tips)
+	fmt.Println(foundTips, len(foundTips))
+
 }
 
 func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
@@ -133,5 +142,32 @@ func allTips(c protobuf.TipServiceClient) ([]*protobuf.Tip, error) {
 		tips = append(tips, res.GetTip())
 	}
 	fmt.Println("All tips found!")
+	return tips, nil
+}
+
+func searchTips(c protobuf.TipServiceClient, title string) ([]*protobuf.Tip, error) {
+	req := &protobuf.SearchTipsRequest{
+		TipTitle: title,
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	stream, err := c.SearchTips(ctx, req)
+	if err != nil {
+		log.Println("error while calling SearchTips: ", err)
+		return nil, err
+	}
+	tips := make([]*protobuf.Tip, 0)
+	for {
+		res, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Println("Error happened: ", err)
+			return nil, err
+		}
+		tips = append(tips, res.GetTip())
+	}
+	fmt.Println("Tips searched!")
 	return tips, nil
 }

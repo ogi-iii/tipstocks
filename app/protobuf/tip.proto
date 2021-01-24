@@ -34,8 +34,17 @@ message AllTipsResponse {
     Tip tip = 1;
 }
 
+message SearchTipsRequest {
+    string tip_title = 1;
+}
+
+message SearchTipsResponse {
+    Tip tip = 1;
+}
+
 service TipService {
     rpc CreateTip (CreateTipRequest) returns (CreateTipResponse);
     rpc DeleteTip (DeleteTipRequest) returns (DeleteTipResponse);
     rpc AllTips (AllTipsRequest) returns (stream AllTipsResponse);
+    rpc SearchTips (SearchTipsRequest) returns (stream SearchTipsResponse);
 }
