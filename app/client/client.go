@@ -7,6 +7,7 @@ import (
 	"log"
 	"myTips/tipstocks/app/protobuf"
 	"myTips/tipstocks/app/utils"
+	"myTips/tipstocks/app/utils/goscraper"
 	"time"
 
 	"google.golang.org/grpc"
@@ -46,7 +47,7 @@ func main() {
 	// }
 	// fmt.Println(tip)
 
-	// id := ""
+	// id := tip.GetId()
 	// err = deleteTip(c, id)
 	// if err != nil {
 	// 	log.Fatalln(err)
@@ -68,13 +69,13 @@ func main() {
 }
 
 func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
-	title, err := utils.GetURLTitle(url)
+	s, err := goscraper.Scrape(url, 5)
 	if err != nil {
-		log.Println("Cannot get title from url: ", err)
+		log.Println("Cannot get a preview of a webpage: ", err)
 		return nil, err
 	}
 	tip := &protobuf.Tip{
-		Title: title,
+		Title: s.Preview.Title,
 		Url:   url,
 	}
 	req := &protobuf.CreateTipRequest{
