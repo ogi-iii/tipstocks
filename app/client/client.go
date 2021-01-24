@@ -38,7 +38,6 @@ func main() {
 	defer cc.Close()
 
 	c := protobuf.NewTipServiceClient(cc)
-	fmt.Println(c)
 
 	// url := "http://www.tohoho-web.com/ex/golang.html"
 	// tip, err := createTip(c, url)
@@ -108,7 +107,7 @@ func deleteTip(c protobuf.TipServiceClient, id string) error {
 			return err
 		}
 	}
-	fmt.Println("Delete completed!: ", res.GetTipId())
+	fmt.Println("Delete a tip completed!: ", res.GetTipId())
 	return nil
 }
 
@@ -133,6 +132,6 @@ func allTips(c protobuf.TipServiceClient) ([]*protobuf.Tip, error) {
 		}
 		tips = append(tips, res.GetTip())
 	}
-	fmt.Println("All completed!")
+	fmt.Println("All tips found!")
 	return tips, nil
 }
