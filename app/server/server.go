@@ -82,13 +82,7 @@ func (*server) AllTips(req *protobuf.AllTipsRequest, stream protobuf.TipService_
 	log.Println("AllTips requested!")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	cur, err := collection.Find(ctx, primitive.D{{}}) // find all tips
-	if err != nil {
-		return status.Errorf(
-			codes.Internal,
-			fmt.Sprintf("couldn't find tips from MongoDB: %v", err),
-		)
-	}
+	cur, err := findTips(ctx, primitive.D{{}}) // using primitive.D as filter without condition
 	defer cur.Close(ctx)
 	for cur.Next(ctx) { // cursor iterator
 		data := &tipItem{}
@@ -110,6 +104,17 @@ func (*server) AllTips(req *protobuf.AllTipsRequest, stream protobuf.TipService_
 		)
 	}
 	return nil
+}
+
+func findTips(ctx context.Context, filter interface{}) (*mongo.Cursor, error) {
+	cur, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, status.Errorf(
+			codes.Internal,
+			fmt.Sprintf("couldn't find tips from MongoDB: %v", err),
+		)
+	}
+	return cur, nil
 }
 
 func convertDataToTip(data *tipItem) *protobuf.Tip {
