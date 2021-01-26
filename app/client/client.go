@@ -58,7 +58,6 @@ func main() {
 		}
 		opts = grpc.WithTransportCredentials(creds)
 	}
-
 	target := fmt.Sprintf("localhost:%v", utils.Conf.ServerPort)
 	cc, err := grpc.Dial(target, opts)
 	if err != nil {
@@ -67,9 +66,27 @@ func main() {
 	fmt.Println("Client started!")
 	defer fmt.Println("\nClient stopped.")
 	defer cc.Close()
-
 	c := protobuf.NewTipServiceClient(cc)
-	fmt.Println(c)
+
+	// url := "https://rightcode.co.jp/blog/information-technology/golang-introduction-html-template"
+	// tip, err := createTip(c, url)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// fmt.Println(tip)
+
+	// id := "600cf34674a405bca3eda11a"
+	// err = deleteTip(c, id)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	// title := "golang"
+	// foundTips, err := searchTips(c, title)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// fmt.Println(foundTips, len(foundTips))
 
 	e := echo.New()
 	t := &tpl{
@@ -78,7 +95,7 @@ func main() {
 	e.Renderer = t
 	e.GET("/", makeHandler(index, c))
 
-	// running server as goroutine
+	// running client as goroutine
 	go func() {
 		e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%v", utils.Conf.ClientPort)))
 	}()
@@ -86,40 +103,6 @@ func main() {
 	interruptCh := make(chan os.Signal, 1)
 	signal.Notify(interruptCh, os.Interrupt)
 	<-interruptCh // block until receiving an interrupt signal
-
-	// url := "https://www.google.com/"
-	// tip, err := createTip(c, url)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(tip)
-
-	// id := tip.GetId()
-	// err = deleteTip(c, id)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	// title := "google"
-	// foundTips, err := searchTips(c, title)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(foundTips, len(foundTips))
-
-	// uri := "https://www.w3.org/"
-	// s, err := goscraper.Scrape(uri, 5)
-	// if err != nil {
-	// 	fmt.Println(err)
-	// 	return
-	// }
-	// fmt.Printf("Icon : %s\n", s.Preview.Icon)
-	// fmt.Printf("Name : %s\n", s.Preview.Name)
-	// fmt.Printf("Title : %s\n", s.Preview.Title)
-	// fmt.Printf("Description : %s\n", s.Preview.Description)
-	// fmt.Printf("Image: %s\n", s.Preview.Images[0])
-	// fmt.Printf("Url : %s\n", s.Preview.Link)
-
 }
 
 func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
@@ -129,8 +112,10 @@ func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
 		return nil, err
 	}
 	tip := &protobuf.Tip{
-		Title: s.Preview.Title,
-		Url:   url,
+		Title:       s.Preview.Title,
+		Url:         url,
+		Description: s.Preview.Description,
+		Image:       s.Preview.Images[0],
 	}
 	req := &protobuf.CreateTipRequest{
 		Tip: tip,

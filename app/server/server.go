@@ -27,8 +27,10 @@ func (*server) CreateTip(ctx context.Context, req *protobuf.CreateTipRequest) (*
 	log.Println("CreateTip requested!")
 	tip := req.GetTip()
 	data := tipItem{
-		Title: tip.GetTitle(),
-		URL:   tip.GetUrl(),
+		Title:       tip.GetTitle(),
+		URL:         tip.GetUrl(),
+		Description: tip.GetDescription(),
+		Image:       tip.GetImage(),
 	}
 	res, err := collection.InsertOne(ctx, data)
 	if err != nil {
@@ -108,11 +110,13 @@ func (*server) AllTips(req *protobuf.AllTipsRequest, stream protobuf.TipService_
 
 func (*server) SearchTips(req *protobuf.SearchTipsRequest, stream protobuf.TipService_SearchTipsServer) error {
 	log.Println("SearchTips requested!")
-	title := req.GetTipTitle()
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	// title filtering: regex with case-insensitive option as "i"
-	cur, err := findTips(ctx, primitive.D{{Key: "title", Value: primitive.Regex{Pattern: title, Options: "i"}}})
+	filter := primitive.D{
+		{Key: "title", Value: primitive.Regex{Pattern: req.GetTipTitle(), Options: "i"}},
+	}
+	cur, err := findTips(ctx, filter)
 	defer cur.Close(ctx)
 	for cur.Next(ctx) { // cursor iterator
 		data := &tipItem{}
@@ -149,17 +153,21 @@ func findTips(ctx context.Context, filter interface{}) (*mongo.Cursor, error) {
 
 func convertDataToTip(data *tipItem) *protobuf.Tip {
 	return &protobuf.Tip{
-		Id:    data.ID.Hex(), // ObjectID -> hex string
-		Title: data.Title,
-		Url:   data.URL,
+		Id:          data.ID.Hex(), // ObjectID -> hex string
+		Title:       data.Title,
+		Url:         data.URL,
+		Description: data.Description,
+		Image:       data.Image,
 	}
 }
 
 // item struct for mongoDB: "bson" means "binary JSON", which is the data format of MongoDB
 type tipItem struct {
-	ID    primitive.ObjectID `bson:"_id,omitempty"` // can be omitted
-	Title string             `bson:"title"`
-	URL   string             `bson:"url"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"` // can be omitted
+	Title       string             `bson:"title"`
+	URL         string             `bson:"url"`
+	Description string             `bson:"description"`
+	Image       string             `bson:"image"`
 }
 
 var collection *mongo.Collection // will be used in many functions. (not only main func!)
