@@ -3,18 +3,47 @@ package main
 import (
 	"context"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"myTips/tipstocks/app/protobuf"
 	"myTips/tipstocks/app/utils"
 	"myTips/tipstocks/app/utils/goscraper"
+	"net/http"
+	"os"
+	"os/signal"
 	"time"
 
+	"github.com/labstack/echo"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
 )
+
+type tpl struct {
+	templates *template.Template
+}
+
+func (t *tpl) Render(w io.Writer, name string, data interface{}, c echo.Context) error {
+	return t.templates.ExecuteTemplate(w, name, data)
+}
+
+func makeHandler(fn func(c echo.Context, pc protobuf.TipServiceClient) error, pc protobuf.TipServiceClient) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		render := fn(c, pc) // 各ハンドラーを内部的に実行
+		return render
+	}
+}
+
+func index(c echo.Context, pc protobuf.TipServiceClient) error {
+	tips, err := allTips(pc)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return c.Render(http.StatusOK, "index.html", tips)
+}
 
 func main() {
 	// Getting the file name & line number if we crashed the go codes
@@ -36,10 +65,27 @@ func main() {
 		fmt.Println("could not connect: ", err)
 	}
 	fmt.Println("Client started!")
+	defer fmt.Println("\nClient stopped.")
 	defer cc.Close()
 
 	c := protobuf.NewTipServiceClient(cc)
 	fmt.Println(c)
+
+	e := echo.New()
+	t := &tpl{
+		templates: template.Must(template.ParseGlob("app/client/views/*.html")),
+	}
+	e.Renderer = t
+	e.GET("/", makeHandler(index, c))
+
+	// running server as goroutine
+	go func() {
+		e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%v", utils.Conf.ClientPort)))
+	}()
+	// wait for "Control + C" to exit
+	interruptCh := make(chan os.Signal, 1)
+	signal.Notify(interruptCh, os.Interrupt)
+	<-interruptCh // block until receiving an interrupt signal
 
 	// url := "https://www.google.com/"
 	// tip, err := createTip(c, url)
@@ -54,12 +100,6 @@ func main() {
 	// 	log.Fatalln(err)
 	// }
 
-	// tips, err := allTips(c)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(tips, len(tips))
-
 	// title := "google"
 	// foundTips, err := searchTips(c, title)
 	// if err != nil {
@@ -67,18 +107,18 @@ func main() {
 	// }
 	// fmt.Println(foundTips, len(foundTips))
 
-	uri := "https://www.w3.org/"
-	s, err := goscraper.Scrape(uri, 5)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	fmt.Printf("Icon : %s\n", s.Preview.Icon)
-	fmt.Printf("Name : %s\n", s.Preview.Name)
-	fmt.Printf("Title : %s\n", s.Preview.Title)
-	fmt.Printf("Description : %s\n", s.Preview.Description)
-	fmt.Printf("Image: %s\n", s.Preview.Images[0])
-	fmt.Printf("Url : %s\n", s.Preview.Link)
+	// uri := "https://www.w3.org/"
+	// s, err := goscraper.Scrape(uri, 5)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// fmt.Printf("Icon : %s\n", s.Preview.Icon)
+	// fmt.Printf("Name : %s\n", s.Preview.Name)
+	// fmt.Printf("Title : %s\n", s.Preview.Title)
+	// fmt.Printf("Description : %s\n", s.Preview.Description)
+	// fmt.Printf("Image: %s\n", s.Preview.Images[0])
+	// fmt.Printf("Url : %s\n", s.Preview.Link)
 
 }
 

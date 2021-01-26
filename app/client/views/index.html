@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Index</title>
+</head>
+<body>
+    <div class="tips">
+        {{range .}}
+            <div class="tip">
+                <p>{{.Id}}</p>
+                <p>{{.Title}}</p>
+                <p>{{.Url}}</p>
+            </div>
+            <br>
+        {{end}}
+    </div>
+</body>
+</html>
