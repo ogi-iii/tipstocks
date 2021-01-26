@@ -10,6 +10,8 @@ import (
 type Configs struct {
 	ServerPort   int
 	ServerDebug  bool
+	ClientPort   int
+	ClientDebug  bool
 	DBPort       int
 	DBName       string
 	DBCollection string
@@ -26,7 +28,9 @@ func init() {
 	}
 	Conf = Configs{
 		ServerPort:   cfg.Section("server").Key("port").MustInt(50051),
-		ServerDebug:  cfg.Section("server").Key("port").MustBool(true),
+		ServerDebug:  cfg.Section("server").Key("debug").MustBool(true),
+		ClientPort:   cfg.Section("client").Key("port").MustInt(8000),
+		ClientDebug:  cfg.Section("client").Key("debug").MustBool(true),
 		DBPort:       cfg.Section("db").Key("port").MustInt(27017),
 		DBName:       cfg.Section("db").Key("name").String(),
 		DBCollection: cfg.Section("db").Key("collection").String(),
