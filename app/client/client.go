@@ -90,9 +90,10 @@ func main() {
 
 	e := echo.New()
 	t := &tpl{
-		templates: template.Must(template.ParseGlob("app/client/views/*.html")),
+		templates: template.Must(template.ParseGlob("app/client/src/views/*.html")),
 	}
 	e.Renderer = t
+	e.Static("/css", "app/client/src/css") // `src/css` ディレクトリ配下のファイルに `/css` のパスでアクセスできるようにする
 	e.GET("/", makeHandler(index, c))
 
 	// running client as goroutine
