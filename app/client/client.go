@@ -68,7 +68,7 @@ func main() {
 	defer cc.Close()
 	c := protobuf.NewTipServiceClient(cc)
 
-	// url := "https://rightcode.co.jp/blog/information-technology/golang-introduction-html-template"
+	// url := "https://qiita.com/konatsu_p/items/dfe199ebe3a7d2010b3e"
 	// tip, err := createTip(c, url)
 	// if err != nil {
 	// 	log.Fatalln(err)
@@ -180,7 +180,15 @@ func allTips(c protobuf.TipServiceClient) ([]*protobuf.Tip, error) {
 			log.Println("Error happened: ", err)
 			return nil, err
 		}
-		tips = append(tips, res.GetTip())
+		tip := res.GetTip()
+		// stringの実体はバイト配列: []runeで文字単位の配列に変換してから文字範囲を指定。その後、全体をstringで括り直す
+		if runeTitle := []rune(tip.GetTitle()); len(runeTitle) > 50 {
+			tip.Title = string(runeTitle[:50]) + "…"
+		}
+		if runeDescription := []rune(tip.GetDescription()); len(runeDescription) > 150 {
+			tip.Description = string([]rune(runeDescription)[:150]) + "…"
+		}
+		tips = append(tips, tip)
 	}
 	fmt.Println("All tips found!")
 	return tips, nil

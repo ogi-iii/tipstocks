@@ -1,3 +1,84 @@
+html {
+    height: 100%;
+}
+
+body {
+    height: 100%;
+    margin: 0;
+}
+
+a {
+    text-decoration: none;
+}
+
+.menubar {
+    position: fixed;
+    width: 175px;
+    background-color: #66b3ff;
+    height: 100%;
+    box-shadow:5px 0px 10px;
+    text-align: center;
+    padding-top: 5px;
+}
+
+.menubar .menu {
+    display: inline-block;
+    font-size: 30px;
+    color: white;
+    padding: 5px 0;
+}
+
+.menubar #all {
+    text-decoration: underline;
+}
+
+.menubar .menu:hover {
+    font-weight: bold;
+}
+
+.tips {
+    background-color: #99ccff;
+    min-height: 100%;
+    margin-left: 175px;
+    padding-top: 20px;
+    padding-left: 25px;
+}
+
 .tip {
-    background-color: green;
+    float: left;
+    text-align: center;
+    border: 2px solid;
+    width: 300px;
+    height: 300px;
+    margin: 5px;
+    padding: 5px;
+    background-color: #fff;
+}
+
+.tip a {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+}
+
+.tip a:hover {
+    opacity: 0.7;
+}
+
+.tip .title {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.tip .description {
+    font-size: 10px;
+}
+
+.tip .preview {
+    max-height: 150px;
+    max-width: 290px;
+}
+
+.clear {
+    clear: both;
 }

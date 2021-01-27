@@ -3,21 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/sanitize.css">
     <link rel="stylesheet" href="/css/index.css">
     <title>Index</title>
 </head>
 <body>
+    <div class="menubar">
+        <p><a href="/" class="menu" id="all">All</a></p>
+        <p><a href="/" class="menu" id="search">Search</a></p>
+        <p><a href="/" class="menu" id="register">Register</a></p>
+        <p><a href="/" class="menu" id="delete">Delete</a></p>
+    </div>
     <div class="tips">
         {{range .}}
             <div class="tip">
-                <p>{{.Id}}</p>
-                <p>{{.Title}}</p>
-                <p>{{.Url}}</p>
-                <p>{{.Description}}</p>
-                <img src="{{.Image}}" alt="preview image">
+                <a href="{{.Url}}" target="_blank">
+                    <img src="{{.Image}}" alt="preview image" class="preview">
+                    <p class="title">{{.Title}}</p>
+                    <p class="description">{{.Description}}</p>
+                </a>
             </div>
-            <br>
         {{end}}
+        <div class="clear"></div>
     </div>
 </body>
 </html>
