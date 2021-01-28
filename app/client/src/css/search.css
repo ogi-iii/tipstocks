@@ -10,6 +10,7 @@
 	width: 80%;
 	margin: 40px 3%;
 }
+
 .cp_iptxt input[type='text'] {
 	font: 20px/30px sans-serif;
 	box-sizing: border-box;
@@ -22,6 +23,7 @@
 	border-bottom: 2px solid #1b2538;
 	background: transparent;
 }
+
 .ef input[type='text']:focus {
 	border-bottom: 2px solid white;
 	outline: none;
