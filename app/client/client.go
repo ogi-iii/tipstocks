@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// ----- echo templates & methods ----- //
 type tpl struct {
 	templates *template.Template
 }
@@ -70,64 +71,7 @@ func blankSearchResult(c echo.Context, pc protobuf.TipServiceClient) error {
 	return c.Render(http.StatusOK, "result.html", foundTips)
 }
 
-func main() {
-	// Getting the file name & line number if we crashed the go codes
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-
-	opts := grpc.WithInsecure()
-	if !utils.Conf.ServerDebug {
-		certFile := "ssl/ca.crt"
-		creds, sslErr := credentials.NewClientTLSFromFile(certFile, "")
-		if sslErr != nil {
-			log.Fatalf("Error while loading CA trust certificate: %v", sslErr)
-		}
-		opts = grpc.WithTransportCredentials(creds)
-	}
-	target := fmt.Sprintf("localhost:%v", utils.Conf.ServerPort)
-	cc, err := grpc.Dial(target, opts)
-	if err != nil {
-		fmt.Println("could not connect: ", err)
-	}
-	fmt.Println("Client started!")
-	defer fmt.Println("\nClient stopped.")
-	defer cc.Close()
-	c := protobuf.NewTipServiceClient(cc)
-
-	// url := "https://qiita.com/konatsu_p/items/dfe199ebe3a7d2010b3e"
-	// tip, err := createTip(c, url)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(tip)
-
-	// id := "600cf34674a405bca3eda11a"
-	// err = deleteTip(c, id)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
-	e := echo.New()
-	t := &tpl{
-		templates: template.Must(template.ParseGlob("app/client/src/views/*.html")),
-	}
-	e.Renderer = t
-	e.Static("/css", "app/client/src/css") // access to `src/css` as `/css`
-	e.GET("/", makeHandler(index, c))
-	e.GET("/search", search)
-	e.GET("/search/", search)
-	e.GET("/search/result", makeHandler(blankSearchResult, c))
-	e.POST("/search/result", makeHandler(searchResult, c))
-
-	// running client as goroutine
-	go func() {
-		e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%v", utils.Conf.ClientPort)))
-	}()
-	// wait for "Control + C" to exit
-	interruptCh := make(chan os.Signal, 1)
-	signal.Notify(interruptCh, os.Interrupt)
-	<-interruptCh // block until receiving an interrupt signal
-}
-
+// ----- gRPC server functions ----- //
 func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
 	s, err := goscraper.Scrape(url, 5)
 	if err != nil {
@@ -203,9 +147,9 @@ func allTips(c protobuf.TipServiceClient) ([]*protobuf.Tip, error) {
 			return nil, err
 		}
 		tip := res.GetTip()
-		// stringの実体はバイト配列: []runeで文字単位の配列に変換してから文字範囲を指定。その後、全体をstringで括り直す
-		if runeTitle := []rune(tip.GetTitle()); len(runeTitle) > 50 {
-			tip.Title = string(runeTitle[:50]) + "…"
+		// String is byte array: After converting to word array using []rune, set word counts range as [:num]
+		if runeTitle := []rune(tip.GetTitle()); len(runeTitle) > 50 { // string(bytes) -> []rune
+			tip.Title = string(runeTitle[:50]) + "…" // []rune -> string
 		}
 		if runeDescription := []rune(tip.GetDescription()); len(runeDescription) > 150 {
 			tip.Description = string([]rune(runeDescription)[:150]) + "…"
@@ -241,4 +185,63 @@ func searchTips(c protobuf.TipServiceClient, title string) ([]*protobuf.Tip, err
 	}
 	fmt.Println("Tips searched!")
 	return tips, nil
+}
+
+// ----- client funcs ----- //
+func main() {
+	// Getting the file name & line number if we crashed the go codes
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	opts := grpc.WithInsecure()
+	if !utils.Conf.ServerDebug {
+		certFile := "ssl/ca.crt"
+		creds, sslErr := credentials.NewClientTLSFromFile(certFile, "")
+		if sslErr != nil {
+			log.Fatalf("Error while loading CA trust certificate: %v", sslErr)
+		}
+		opts = grpc.WithTransportCredentials(creds)
+	}
+	target := fmt.Sprintf("localhost:%v", utils.Conf.ServerPort)
+	cc, err := grpc.Dial(target, opts)
+	if err != nil {
+		fmt.Println("could not connect: ", err)
+	}
+	fmt.Println("Client started!")
+	defer fmt.Println("\nClient stopped.")
+	defer cc.Close()
+	c := protobuf.NewTipServiceClient(cc)
+
+	// url := "https://qiita.com/konatsu_p/items/dfe199ebe3a7d2010b3e"
+	// tip, err := createTip(c, url)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// fmt.Println(tip)
+
+	// id := "600cf34674a405bca3eda11a"
+	// err = deleteTip(c, id)
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+
+	e := echo.New()
+	t := &tpl{
+		templates: template.Must(template.ParseGlob("app/client/src/views/*.html")),
+	}
+	e.Renderer = t
+	e.Static("/css", "app/client/src/css") // access to `src/css` as `/css`
+	e.GET("/", makeHandler(index, c))
+	e.GET("/search", search)
+	e.GET("/search/", search)
+	e.GET("/search/result", makeHandler(blankSearchResult, c))
+	e.POST("/search/result", makeHandler(searchResult, c))
+
+	// running client as goroutine
+	go func() {
+		e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%v", utils.Conf.ClientPort)))
+	}()
+	// wait for "Control + C" to exit
+	interruptCh := make(chan os.Signal, 1)
+	signal.Notify(interruptCh, os.Interrupt)
+	<-interruptCh // block until receiving an interrupt signal
 }
