@@ -42,7 +42,6 @@ func index(c echo.Context, pc protobuf.TipServiceClient) error {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
 	return c.Render(http.StatusOK, "index.html", tips)
 }
 
@@ -55,9 +54,9 @@ func searchResult(c echo.Context, pc protobuf.TipServiceClient) error {
 	title := c.FormValue("keywords")
 	foundTips, err := searchTips(pc, title)
 	if err != nil {
-		log.Fatalln(err)
+		log.Println(err)
+		return c.Redirect(http.StatusFound, "/")
 	}
-
 	return c.Render(http.StatusOK, "result.html", foundTips)
 }
 
@@ -65,14 +64,55 @@ func blankSearchResult(c echo.Context, pc protobuf.TipServiceClient) error {
 	title := ""
 	foundTips, err := searchTips(pc, title)
 	if err != nil {
+		log.Println(err)
+		return c.Redirect(http.StatusFound, "/")
+	}
+	return c.Render(http.StatusOK, "result.html", foundTips)
+}
+
+func register(c echo.Context) error {
+	err := ""
+	return c.Render(http.StatusOK, "register.html", err)
+}
+
+func registerNewTip(c echo.Context, pc protobuf.TipServiceClient) error {
+	url := c.FormValue("url")
+	_, err := createTip(pc, url)
+	if err != nil {
+		log.Println(err)
+		return c.Render(http.StatusOK, "register.html", fmt.Sprintln(err))
+	}
+	return c.Redirect(http.StatusFound, "/")
+}
+
+func delete(c echo.Context, pc protobuf.TipServiceClient) error {
+	tips, err := allTips(pc)
+	if err != nil {
 		log.Fatalln(err)
 	}
+	return c.Render(http.StatusOK, "delete.html", tips)
+}
 
-	return c.Render(http.StatusOK, "result.html", foundTips)
+func remove(c echo.Context, pc protobuf.TipServiceClient) error {
+	id := c.QueryParam("id")
+	err := deleteTip(pc, id)
+	if err != nil {
+		log.Println(err)
+		return c.Redirect(http.StatusFound, "/")
+	}
+	return c.Redirect(http.StatusFound, "/delete")
 }
 
 // ----- gRPC server functions ----- //
 func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
+	r, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if r.StatusCode != 200 {
+		return nil, &urlNotFound{url}
+	}
+
 	s, err := goscraper.Scrape(url, 5)
 	if err != nil {
 		log.Println("Cannot get a preview of a webpage: ", err)
@@ -96,6 +136,14 @@ func createTip(c protobuf.TipServiceClient, url string) (*protobuf.Tip, error) {
 	}
 	fmt.Println("New tip created!")
 	return res.GetTip(), nil
+}
+
+type urlNotFound struct {
+	url string
+}
+
+func (e *urlNotFound) Error() string {
+	return fmt.Sprintf("[URL Not Found ...] %v", e.url)
 }
 
 func deleteTip(c protobuf.TipServiceClient, id string) error {
@@ -156,6 +204,7 @@ func allTips(c protobuf.TipServiceClient) ([]*protobuf.Tip, error) {
 		}
 		tips = append(tips, tip)
 	}
+	tips = reverse(tips)
 	fmt.Println("All tips found!")
 	return tips, nil
 }
@@ -183,8 +232,16 @@ func searchTips(c protobuf.TipServiceClient, title string) ([]*protobuf.Tip, err
 		}
 		tips = append(tips, res.GetTip())
 	}
+	tips = reverse(tips)
 	fmt.Println("Tips searched!")
 	return tips, nil
+}
+
+func reverse(tips []*protobuf.Tip) []*protobuf.Tip {
+	for i, j := 0, len(tips)-1; i < j; i, j = i+1, j-1 {
+		tips[i], tips[j] = tips[j], tips[i]
+	}
+	return tips
 }
 
 // ----- client funcs ----- //
@@ -211,19 +268,6 @@ func main() {
 	defer cc.Close()
 	c := protobuf.NewTipServiceClient(cc)
 
-	// url := "https://qiita.com/konatsu_p/items/dfe199ebe3a7d2010b3e"
-	// tip, err := createTip(c, url)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(tip)
-
-	// id := "600cf34674a405bca3eda11a"
-	// err = deleteTip(c, id)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-
 	e := echo.New()
 	t := &tpl{
 		templates: template.Must(template.ParseGlob("app/client/src/views/*.html")),
@@ -235,6 +279,10 @@ func main() {
 	e.GET("/search/", search)
 	e.GET("/search/result", makeHandler(blankSearchResult, c))
 	e.POST("/search/result", makeHandler(searchResult, c))
+	e.GET("/register", register)
+	e.POST("/register", makeHandler(registerNewTip, c))
+	e.GET("/delete", makeHandler(delete, c))
+	e.GET("/remove", makeHandler(remove, c))
 
 	// running client as goroutine
 	go func() {

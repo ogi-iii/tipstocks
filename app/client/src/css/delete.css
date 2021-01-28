@@ -1,0 +1,61 @@
+.tips {
+    min-height: 100%;
+    margin-left: 175px;
+    padding-top: 20px;
+    padding-left: 25px;
+}
+
+.tip {
+    float: left;
+    text-align: center;
+    border: 2px solid;
+    width: 300px;
+    height: 380px;
+    margin: 5px;
+    padding: 5px;
+    background-color: #fff;
+}
+
+.tip .title {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.tip .description {
+    font-size: 10px;
+}
+
+.tip .preview {
+    max-height: 150px;
+    max-width: 290px;
+}
+
+.clear {
+    clear: both;
+}
+
+.link {
+    display: inline-block;
+    width: 100%;
+}
+
+.link:hover {
+    opacity: 0.7;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.3em 1em;
+    text-decoration: none;
+    color: #ff0000;
+    border: solid 2px  #ff0000;
+    border-radius: 3px;
+    transition: .4s;
+    font-size: 20px;
+    margin-top: 5px;
+}
+
+.btn:hover {
+    background: #ff0000;
+    color: #ffffff;
+}

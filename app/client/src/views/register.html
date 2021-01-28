@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/sanitize.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/register.css">
+    <title>Register</title>
+</head>
+<body>
+    <div class="menubar">
+        <p><a href="/" class="menu" id="all">All</a></p>
+        <p><a href="/search" class="menu" id="search">Search</a></p>
+        <p><a href="/register" class="menu" id="register" style="text-decoration: underline;">Register</a></p>
+        <p><a href="/delete" class="menu" id="delete">Delete</a></p>
+    </div>
+    <div class="register">
+        <form action="/register" method="post">
+            <div class="cp_iptxt">
+                <label class="ef">
+                <input type="url" placeholder="Register Your URL" name="url" id="url">
+                </label>
+                <input type="submit" value="register" class="button">
+            </div>
+        </form>
+        <p class="error">{{.}}</p>
+    </div>
+</body>
+</html>

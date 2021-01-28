@@ -1,0 +1,57 @@
+.register {
+    min-height: 100%;
+    margin-left: 175px;
+    padding-top: 20px;
+    padding-left: 25px;
+}
+
+.cp_iptxt {
+	position: relative;
+	width: 80%;
+	margin: 40px 3%;
+}
+
+.cp_iptxt input[type='url'] {
+	font: 20px/30px sans-serif;
+	box-sizing: border-box;
+	width: 70%;
+	padding: 0.3em;
+	transition: 0.3s;
+	letter-spacing: 1px;
+	color: #ffffff;
+	border: none;
+	border-bottom: 2px solid #1b2538;
+	background: transparent;
+}
+
+.ef input[type='url']:focus {
+	border-bottom: 2px solid #ffffff;
+	outline: none;
+}
+
+.button {
+    display       : inline-block;
+    border-radius : 5%;
+    font-size     : 12pt;
+    text-align    : center;
+    cursor        : pointer;
+    padding       : 5px 10px;
+    background    : #ffffff;
+    color         : #000066;
+    line-height   : 1em;
+    transition    : .3s;
+    box-shadow    : 3px 3px 3px #666666;
+    border        : 2px solid #ffffff;
+}
+
+.button:hover {
+    box-shadow    : none;
+    color         : #ffffff;
+    background    : #000066;
+}
+
+.error {
+    padding: 0.3em;
+    font-size: 25px;
+    color: #ffffff;
+}
