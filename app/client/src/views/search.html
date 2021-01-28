@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/sanitize.css">
+    <link rel="stylesheet" href="/css/base.css">
+    <link rel="stylesheet" href="/css/search.css">
+    <title>Search</title>
+</head>
+<body>
+    <div class="menubar">
+        <p><a href="/" class="menu" id="all">All</a></p>
+        <p><a href="/search" class="menu" id="search" style="text-decoration: underline;">Search</a></p>
+        <p><a href="/register" class="menu" id="register">Register</a></p>
+        <p><a href="/delete" class="menu" id="delete">Delete</a></p>
+    </div>
+    <div class="search">
+        <form action="/search/result" method="post">
+            <div class="cp_iptxt">
+                <label class="ef">
+                <input type="text" placeholder="keywords" name="keywords" id="keywords">
+                </label>
+                <input type="submit" value="search" class="button">
+            </div>
+        </form>
+    </div>
+</body>
+</html>

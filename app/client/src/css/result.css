@@ -1,0 +1,12 @@
+.results {
+    min-height: 100%;
+    margin-left: 175px;
+    padding-top: 20px;
+    padding-left: 25px;
+}
+
+.found {
+    padding: 0.3em;
+    font-size: 25px;
+    color: white;
+}

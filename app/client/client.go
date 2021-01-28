@@ -29,9 +29,9 @@ func (t *tpl) Render(w io.Writer, name string, data interface{}, c echo.Context)
 	return t.templates.ExecuteTemplate(w, name, data)
 }
 
-func makeHandler(fn func(c echo.Context, pc protobuf.TipServiceClient) error, pc protobuf.TipServiceClient) echo.HandlerFunc {
+func makeHandler(handler func(c echo.Context, pc protobuf.TipServiceClient) error, pc protobuf.TipServiceClient) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		render := fn(c, pc) // 各ハンドラーを内部的に実行
+		render := handler(c, pc)
 		return render
 	}
 }
@@ -43,6 +43,31 @@ func index(c echo.Context, pc protobuf.TipServiceClient) error {
 	}
 
 	return c.Render(http.StatusOK, "index.html", tips)
+}
+
+func search(c echo.Context) error {
+	data := ""
+	return c.Render(http.StatusOK, "search.html", data)
+}
+
+func searchResult(c echo.Context, pc protobuf.TipServiceClient) error {
+	title := c.FormValue("keywords")
+	foundTips, err := searchTips(pc, title)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return c.Render(http.StatusOK, "result.html", foundTips)
+}
+
+func blankSearchResult(c echo.Context, pc protobuf.TipServiceClient) error {
+	title := ""
+	foundTips, err := searchTips(pc, title)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return c.Render(http.StatusOK, "result.html", foundTips)
 }
 
 func main() {
@@ -81,13 +106,6 @@ func main() {
 	// 	log.Fatalln(err)
 	// }
 
-	// title := "golang"
-	// foundTips, err := searchTips(c, title)
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// fmt.Println(foundTips, len(foundTips))
-
 	e := echo.New()
 	t := &tpl{
 		templates: template.Must(template.ParseGlob("app/client/src/views/*.html")),
@@ -95,6 +113,10 @@ func main() {
 	e.Renderer = t
 	e.Static("/css", "app/client/src/css") // access to `src/css` as `/css`
 	e.GET("/", makeHandler(index, c))
+	e.GET("/search", search)
+	e.GET("/search/", search)
+	e.GET("/search/result", makeHandler(blankSearchResult, c))
+	e.POST("/search/result", makeHandler(searchResult, c))
 
 	// running client as goroutine
 	go func() {

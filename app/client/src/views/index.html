@@ -4,15 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://unpkg.com/sanitize.css">
+    <link rel="stylesheet" href="/css/base.css">
     <link rel="stylesheet" href="/css/index.css">
     <title>Index</title>
 </head>
 <body>
     <div class="menubar">
-        <p><a href="/" class="menu" id="all">All</a></p>
-        <p><a href="/" class="menu" id="search">Search</a></p>
-        <p><a href="/" class="menu" id="register">Register</a></p>
-        <p><a href="/" class="menu" id="delete">Delete</a></p>
+        <p><a href="/" class="menu" id="all" style="text-decoration: underline;">All</a></p>
+        <p><a href="/search" class="menu" id="search">Search</a></p>
+        <p><a href="/register" class="menu" id="register">Register</a></p>
+        <p><a href="/delete" class="menu" id="delete">Delete</a></p>
     </div>
     <div class="tips">
         {{range .}}
