@@ -17,10 +17,14 @@ import (
 )
 
 /*
-	Before test, you must conduct "go run app/server/server.go" for running gRPC server.
+	Before test, you must run server using below commands
+
+	(tipstocks)$ cd app/server
+	(tipstocks/app/server)$ go run server.go
+
+	After that, conduct "go test ./..." for all tests
 */
 func TestGRPC(t *testing.T) {
-	// "go test ./..." : run all tests
 	opts := grpc.WithInsecure()
 	conf := utils.LoadConf("../utils/config.ini")
 	if !conf.ServerDebug {
