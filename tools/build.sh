@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # generate files
-./tools/protoc.sh
+# ./tools/protoc.sh
 ./tools/ssl.sh
 
 # build client & server apps
