@@ -180,7 +180,7 @@ func main() {
 	// Getting the file name & line number if we crashed the go codes
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	conf := utils.LoadConf("app/utils/config.ini")
+	conf := utils.LoadConf("../utils/config.ini")
 	address := fmt.Sprintf("0.0.0.0:%v", conf.ServerPort)
 	lis, lisErr := net.Listen("tcp", address)
 	if lisErr != nil {
@@ -192,8 +192,8 @@ func main() {
 
 	opts := []grpc.ServerOption{} // blank options
 	if !conf.ServerDebug {
-		certFile := "ssl/server.crt"
-		keyFile := "ssl/server.pem"
+		certFile := "../../ssl/server.crt"
+		keyFile := "../../ssl/server.pem"
 		creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
 		if sslErr != nil {
 			log.Fatalln("failed to load certificates: ", sslErr)
