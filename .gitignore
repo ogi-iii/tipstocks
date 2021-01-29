@@ -14,5 +14,7 @@
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
-# secret files
+# generated files
 app/ssl
+app/client/linux-amd64
+app/server/linux-amd64
