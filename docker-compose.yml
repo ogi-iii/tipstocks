@@ -1,0 +1,23 @@
+version: '3'
+services:
+    client:
+        build:
+            context: .
+            dockerfile: Dockerfile_client
+        ports:
+            - "8081:8081"
+    server:
+        build:
+            context: .
+            dockerfile: Dockerfile_server
+        links:
+            - mongodb
+        depends_on:
+            - mongodb
+        ports:
+            - "50062:50062"
+    mongodb:
+        image: mongo
+        container_name: mongodb
+        ports:
+            - "27017:27017"

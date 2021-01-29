@@ -24,7 +24,7 @@ import (
 )
 
 func (*server) CreateTip(ctx context.Context, req *protobuf.CreateTipRequest) (*protobuf.CreateTipResponse, error) {
-	log.Println("CreateTip requested!")
+	// log.Println("CreateTip requested!")
 	tip := req.GetTip()
 	data := tipItem{
 		Title:       tip.GetTitle(),
@@ -51,7 +51,7 @@ func (*server) CreateTip(ctx context.Context, req *protobuf.CreateTipRequest) (*
 }
 
 func (*server) DeleteTip(ctx context.Context, req *protobuf.DeleteTipRequest) (*protobuf.DeleteTipResponse, error) {
-	log.Println("DeleteTip requested!")
+	// log.Println("DeleteTip requested!")
 	tipID := req.GetTipId()
 	objID, err := primitive.ObjectIDFromHex(tipID) // hex string -> ObjectID
 	if err != nil {
@@ -81,7 +81,7 @@ func (*server) DeleteTip(ctx context.Context, req *protobuf.DeleteTipRequest) (*
 }
 
 func (*server) AllTips(req *protobuf.AllTipsRequest, stream protobuf.TipService_AllTipsServer) error {
-	log.Println("AllTips requested!")
+	// log.Println("AllTips requested!")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	cur, err := findTips(ctx, primitive.D{{}}) // using primitive.D as filter without condition
@@ -109,7 +109,7 @@ func (*server) AllTips(req *protobuf.AllTipsRequest, stream protobuf.TipService_
 }
 
 func (*server) SearchTips(req *protobuf.SearchTipsRequest, stream protobuf.TipService_SearchTipsServer) error {
-	log.Println("SearchTips requested!")
+	// log.Println("SearchTips requested!")
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	// title filtering: regex with case-insensitive option as "i"
@@ -187,7 +187,7 @@ func main() {
 		log.Fatalln("failed to listen: ", lisErr)
 		return
 	}
-	defer fmt.Println("Listener closed.")
+	// defer fmt.Println("Listener closed.")
 	defer lis.Close()
 
 	opts := []grpc.ServerOption{} // blank options
@@ -202,15 +202,15 @@ func main() {
 		opts = append(opts, grpc.Creds(creds))
 	}
 	s := grpc.NewServer(opts...)
-	defer fmt.Println("Server stopped.")
+	// defer fmt.Println("Server stopped.")
 	defer s.Stop()
 
 	protobuf.RegisterTipServiceServer(s, &server{})
 	reflection.Register(s) // for Evans (https://github.com/ktr0731/evans)
-	fmt.Println("Ready for running server...")
+	// fmt.Println("Ready for running server...")
 
 	// Connect to MongoDB: need to be started DB before running server
-	dbURI := fmt.Sprintf("mongodb://localhost:%v", conf.DBPort)
+	dbURI := fmt.Sprintf("mongodb://mongodb:%v", conf.DBPort)
 	client, dbErr := mongo.NewClient(options.Client().ApplyURI(dbURI))
 	if dbErr != nil {
 		log.Fatalln(dbErr)
@@ -218,17 +218,28 @@ func main() {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	dbErr = client.Connect(ctx)
-	if dbErr != nil {
-		log.Fatalln(dbErr)
-		return
+	deadline := 60
+	for {
+		if deadline <= 0 {
+			log.Fatalln("couldn't reach to mongoDB")
+			return
+		}
+		deadline--
+		dbErr = client.Connect(ctx)
+		if dbErr != nil {
+			// log.Println(dbErr)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		pingErr := client.Ping(ctx, readpref.Primary()) // ping to MongoDB
+		if pingErr != nil {
+			// log.Println("ping error to MongoDB: ", pingErr)
+			time.Sleep(1 * time.Second)
+			continue
+		}
+		break
 	}
-	pingErr := client.Ping(ctx, readpref.Primary()) // ping to MongoDB
-	if pingErr != nil {
-		log.Fatalln("ping error to MongoDB: ", pingErr)
-		return
-	}
-	defer fmt.Println("\nDisconnected with MongoDB.")
+	// defer fmt.Println("\nDisconnected with MongoDB.")
 	defer client.Disconnect(ctx) // need to be stopped DB after stopping app
 
 	collection = client.Database(conf.DBName).Collection(conf.DBCollection)
@@ -236,7 +247,7 @@ func main() {
 
 	// running server as goroutine
 	go func() {
-		fmt.Printf("Server started! (port: %v)\n", conf.ServerPort)
+		fmt.Printf("Internal gRPC server started! (port: %v)\n", conf.ServerPort)
 		if err := s.Serve(lis); err != nil {
 			log.Fatalln("failed to serve: ", err)
 		}

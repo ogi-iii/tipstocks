@@ -259,13 +259,13 @@ func main() {
 		}
 		opts = grpc.WithTransportCredentials(creds)
 	}
-	target := fmt.Sprintf("localhost:%v", conf.ServerPort)
+	target := fmt.Sprintf("server:%v", conf.ServerPort)
 	cc, err := grpc.Dial(target, opts)
 	if err != nil {
 		fmt.Println("could not connect: ", err)
 	}
-	fmt.Println("Client started!")
-	defer fmt.Println("\nClient stopped.")
+	// fmt.Println("Client started!")
+	// defer fmt.Println("\nClient stopped.")
 	defer cc.Close()
 	c := protobuf.NewTipServiceClient(cc)
 
@@ -287,6 +287,16 @@ func main() {
 
 	// running client as goroutine
 	go func() {
+		for {
+			req := &protobuf.AllTipsRequest{}
+			ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+			defer cancel()
+			_, err := c.AllTips(ctx, req)
+			if err != nil {
+				continue
+			}
+			break
+		}
 		e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%v", conf.ClientPort)))
 	}()
 	// wait for "Control + C" to exit

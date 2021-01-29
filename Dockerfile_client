@@ -1,0 +1,5 @@
+FROM alpine:latest
+WORKDIR /root/
+COPY app app
+EXPOSE 8081
+CMD ["./app/client/linux-amd64/client"]

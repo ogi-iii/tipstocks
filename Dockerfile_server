@@ -1,0 +1,5 @@
+FROM alpine:latest
+WORKDIR /root/
+COPY app app
+EXPOSE 50062
+CMD ["./app/server/linux-amd64/server"]
