@@ -1,6 +1,9 @@
 # tipstocks
 Simple CR(U)D App for managing your favorite links!
 
+# Sample
+![app demo movie](./sample/app_movie.gif)
+
 # Build & Run
 App will be built & run as docker-compose.
 
