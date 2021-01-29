@@ -23,3 +23,15 @@ $ ./run.sh
 # as background
 # $ ./run.sh -d
 ```
+
+# Tech Skills
+
+### GO
+- basic golang
+- gRPC
+- echo framework
+
+### Others
+- Shell Script
+- Docker
+- HTML/CSS
