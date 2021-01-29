@@ -16,14 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-/*
-	Before test, you must run server using below commands
-
-	(tipstocks)$ cd app/server
-	(tipstocks/app/server)$ go run server.go
-
-	After that, conduct "go test -v ./..." for all tests
-*/
+// TestGRPC : passed!
 func TestGRPC(t *testing.T) {
 	opts := grpc.WithInsecure()
 	conf := utils.LoadConf("../utils/config.ini")

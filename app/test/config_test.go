@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+// TestLoadConf : passed!
 func TestLoadConf(t *testing.T) {
 	// dir, _ := os.Getwd()
 	// println(dir)
