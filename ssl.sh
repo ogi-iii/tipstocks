@@ -15,10 +15,10 @@
 
 # Changes these CN's to match your hosts in your environment if needed.
 SERVER_CN=localhost
-if [ ! -d "ssl" ];then
-    mkdir ssl
+if [ ! -d "app/ssl" ];then
+    mkdir app/ssl
 fi
-cd ssl
+cd app/ssl
 
 # Step 1: Generate Certificate Authority + Trust Certificate (ca.crt)
 openssl genrsa -passout pass:1111 -des3 -out ca.key 4096
@@ -36,4 +36,4 @@ openssl x509 -req -passin pass:1111 -days 3650 -in server.csr -CA ca.crt -CAkey 
 # Step 5: Convert the server certificate to .pem format (server.pem) - usable by gRPC
 openssl pkcs8 -topk8 -nocrypt -passin pass:1111 -in server.key -out server.pem
 
-cd ..
+cd ../..

@@ -22,13 +22,13 @@ import (
 	(tipstocks)$ cd app/server
 	(tipstocks/app/server)$ go run server.go
 
-	After that, conduct "go test ./..." for all tests
+	After that, conduct "go test -v ./..." for all tests
 */
 func TestGRPC(t *testing.T) {
 	opts := grpc.WithInsecure()
 	conf := utils.LoadConf("../utils/config.ini")
 	if !conf.ServerDebug {
-		certFile := "../../ssl/ca.crt"
+		certFile := "../ssl/ca.crt"
 		creds, sslErr := credentials.NewClientTLSFromFile(certFile, "")
 		if sslErr != nil {
 			t.Error("Error while loading CA trust certificate: ", sslErr)

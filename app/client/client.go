@@ -249,10 +249,10 @@ func main() {
 	// Getting the file name & line number if we crashed the go codes
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	conf := utils.LoadConf("../utils/config.ini")
+	conf := utils.LoadConf("app/utils/config.ini")
 	opts := grpc.WithInsecure()
 	if !conf.ServerDebug {
-		certFile := "../../ssl/ca.crt"
+		certFile := "app/ssl/ca.crt"
 		creds, sslErr := credentials.NewClientTLSFromFile(certFile, "")
 		if sslErr != nil {
 			log.Fatalf("Error while loading CA trust certificate: %v", sslErr)
@@ -271,7 +271,7 @@ func main() {
 
 	e := echo.New()
 	t := &tpl{
-		templates: template.Must(template.ParseGlob("./src/views/*.html")),
+		templates: template.Must(template.ParseGlob("app/client/src/views/*.html")),
 	}
 	e.Renderer = t
 	e.Static("/css", "app/client/src/css") // access to `src/css` as `/css`
