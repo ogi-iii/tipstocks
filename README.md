@@ -2,7 +2,7 @@
 Simple CR(U)D App for managing your favorite links!
 
 # Build & Run
-App will be built & run as docker-compose
+App will be built & run as docker-compose.
 
 ## \[Way 1\] simple setup
 
@@ -25,13 +25,14 @@ $ ./run.sh
 ```
 
 # Tech Skills
+The skill set for creating this app
 
-### GO
+## Go
 - basic golang
 - gRPC
 - echo framework
 
-### Others
+## Others
 - Shell Script
 - Docker
 - HTML/CSS
