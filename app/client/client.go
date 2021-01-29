@@ -249,8 +249,9 @@ func main() {
 	// Getting the file name & line number if we crashed the go codes
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
+	conf := utils.LoadConf("app/utils/config.ini")
 	opts := grpc.WithInsecure()
-	if !utils.Conf.ServerDebug {
+	if !conf.ServerDebug {
 		certFile := "ssl/ca.crt"
 		creds, sslErr := credentials.NewClientTLSFromFile(certFile, "")
 		if sslErr != nil {
@@ -258,7 +259,7 @@ func main() {
 		}
 		opts = grpc.WithTransportCredentials(creds)
 	}
-	target := fmt.Sprintf("localhost:%v", utils.Conf.ServerPort)
+	target := fmt.Sprintf("localhost:%v", conf.ServerPort)
 	cc, err := grpc.Dial(target, opts)
 	if err != nil {
 		fmt.Println("could not connect: ", err)
@@ -286,7 +287,7 @@ func main() {
 
 	// running client as goroutine
 	go func() {
-		e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%v", utils.Conf.ClientPort)))
+		e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%v", conf.ClientPort)))
 	}()
 	// wait for "Control + C" to exit
 	interruptCh := make(chan os.Signal, 1)

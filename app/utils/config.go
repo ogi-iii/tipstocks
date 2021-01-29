@@ -20,13 +20,13 @@ type Configs struct {
 // Conf : contains Configs
 var Conf Configs
 
-func init() {
-	cfg, cfgErr := ini.Load("app/utils/config.ini")
+// LoadConf : load settings from config.ini
+func LoadConf(path string) Configs {
+	cfg, cfgErr := ini.Load(path)
 	if cfgErr != nil {
 		log.Fatalln("Cannot load config.ini: ", cfgErr)
-		return
 	}
-	Conf = Configs{
+	return Configs{
 		ServerPort:   cfg.Section("server").Key("port").MustInt(50051),
 		ServerDebug:  cfg.Section("server").Key("debug").MustBool(true),
 		ClientPort:   cfg.Section("client").Key("port").MustInt(8000),

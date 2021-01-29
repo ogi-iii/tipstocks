@@ -180,7 +180,8 @@ func main() {
 	// Getting the file name & line number if we crashed the go codes
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
-	address := fmt.Sprintf("0.0.0.0:%v", utils.Conf.ServerPort)
+	conf := utils.LoadConf("app/utils/config.ini")
+	address := fmt.Sprintf("0.0.0.0:%v", conf.ServerPort)
 	lis, lisErr := net.Listen("tcp", address)
 	if lisErr != nil {
 		log.Fatalln("failed to listen: ", lisErr)
@@ -190,7 +191,7 @@ func main() {
 	defer lis.Close()
 
 	opts := []grpc.ServerOption{} // blank options
-	if !utils.Conf.ServerDebug {
+	if !conf.ServerDebug {
 		certFile := "ssl/server.crt"
 		keyFile := "ssl/server.pem"
 		creds, sslErr := credentials.NewServerTLSFromFile(certFile, keyFile)
@@ -209,7 +210,7 @@ func main() {
 	fmt.Println("Ready for running server...")
 
 	// Connect to MongoDB: need to be started DB before running server
-	dbURI := fmt.Sprintf("mongodb://localhost:%v", utils.Conf.DBPort)
+	dbURI := fmt.Sprintf("mongodb://localhost:%v", conf.DBPort)
 	client, dbErr := mongo.NewClient(options.Client().ApplyURI(dbURI))
 	if dbErr != nil {
 		log.Fatalln(dbErr)
@@ -230,12 +231,12 @@ func main() {
 	defer fmt.Println("\nDisconnected with MongoDB.")
 	defer client.Disconnect(ctx) // need to be stopped DB after stopping app
 
-	collection = client.Database(utils.Conf.DBName).Collection(utils.Conf.DBCollection)
-	fmt.Printf("Connected with MongoDB! (Collection: %v, port: %v)\n", collection.Name(), utils.Conf.DBPort)
+	collection = client.Database(conf.DBName).Collection(conf.DBCollection)
+	fmt.Printf("Connected with MongoDB! (Collection: %v, port: %v)\n", collection.Name(), conf.DBPort)
 
 	// running server as goroutine
 	go func() {
-		fmt.Printf("Server started! (port: %v)\n", utils.Conf.ServerPort)
+		fmt.Printf("Server started! (port: %v)\n", conf.ServerPort)
 		if err := s.Serve(lis); err != nil {
 			log.Fatalln("failed to serve: ", err)
 		}
